@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's Cooking, Dek?</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #fff8f0; }
+    h1 { color: #ff6600; }
+    .ingredient-list, .recipe-results, .meal-planner { margin-top: 1.5rem; }
+    label { display: block; margin: 5px 0; }
+    .recipe { margin: 10px 0; padding: 10px; background: #ffe0b2; border-radius: 10px; }
+    .steps { font-size: 0.9rem; margin-top: 5px; }
+    .add-btn { background: #ff9933; border: none; padding: 5px 10px; margin-top: 5px; cursor: pointer; color: white; border-radius: 5px; }
+    .planner-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .planner-table th, .planner-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    .planner-table th { background-color: #ffd699; }
+  </style>
+</head>
+<body>
+  <h1>🍳 What's Cooking, Dek?</h1>
+  <p>Select available ingredients to see what you can cook!</p>
+
+  <div class="ingredient-list">
+    <h3>Available Ingredients</h3>
+    <div id="ingredients"></div>
+  </div>
+
+  <button onclick="suggestRecipes()">Find Recipes</button>
+
+  <div class="recipe-results">
+    <h3>Suggested Recipes</h3>
+    <div id="recipes"></div>
+  </div>
+
+  <div class="meal-planner">
+    <h3>Meal Planner (Sunday to Monday)</h3>
+    <table class="planner-table" id="plannerTable">
+      <thead>
+        <tr>
+          <th>Meal / Day</th>
+          <th>Sunday</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+        </tr>
+      </thead>
+      <tbody id="plannerBody">
+        <tr><th>Breakfast</th></tr>
+        <tr><th>Lunch</th></tr>
+        <tr><th>Dinner</th></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const ingredients = [
+      "Sayote", "Talong", "Kalabasa", "Patatas", "Okra", "Upo", "Carrots", "Cabbage",
+      "Egg", "Chicken Meat", "Pork", "Pipino", "Pancit", "Fish"
+    ];
+
+    const recipes = [
+      { name: "Ginisang Sayote", ingredients: ["Sayote", "Chicken Meat"], steps: "Sauté garlic and onion, add chicken, then sliced sayote. Simmer until tender." },
+      { name: "Tortang Talong", ingredients: ["Talong", "Egg"], steps: "Grill eggplant, peel skin, flatten, dip in beaten egg, and fry." },
+      { name: "Chicken Tinola", ingredients: ["Chicken Meat", "Sayote", "Cabbage"], steps: "Boil chicken with ginger and onion, add sayote and cabbage until cooked." },
+      { name: "Adobong Baboy", ingredients: ["Pork"], steps: "Simmer pork in soy sauce, vinegar, garlic, and bay leaves until tender." },
+      { name: "Fish with Pipino Salad", ingredients: ["Fish", "Pipino"], steps: "Fry or grill fish. Mix sliced pipino with vinegar and salt for salad." },
+      { name: "Ginisang Upo", ingredients: ["Upo", "Pork"], steps: "Sauté garlic, onion, pork, then add sliced upo and simmer." },
+      { name: "Vegetable Omelette", ingredients: ["Egg", "Cabbage", "Carrots"], steps: "Mix egg with chopped veggies, pour in pan, and cook both sides." },
+      { name: "Pancit Guisado", ingredients: ["Pancit", "Carrots", "Cabbage", "Pork"], steps: "Sauté pork and veggies, add pancit noodles and broth, stir-fry." },
+      { name: "Boiled Veggies with Bagoong Dip", ingredients: ["Okra", "Talong", "Sayote", "Cabbage"], steps: "Boil veggies until soft, serve with bagoong or soy sauce dip." },
+      { name: "Kalabasa Guisado", ingredients: ["Kalabasa", "Pork"], steps: "Sauté garlic and pork, add sliced kalabasa, and simmer until tender." }
+    ];
+
+    const mealPlan = Array(3).fill(0).map(() => Array(7).fill("")); // 3 meals x 7 days
+
+    const ingredientsDiv = document.getElementById('ingredients');
+    ingredients.forEach(item => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" value="${item}"> ${item}`;
+      ingredientsDiv.appendChild(label);
+    });
+
+    function suggestRecipes() {
+      const checked = Array.from(document.querySelectorAll('input[type=checkbox]:checked')).map(el => el.value);
+
+      const results = recipes.filter(recipe => recipe.ingredients.every(ing => checked.includes(ing)));
+
+      const recipesDiv = document.getElementById('recipes');
+      recipesDiv.innerHTML = '';
+
+      if (results.length === 0) {
+        recipesDiv.innerHTML = '<p>No matching recipes. Try more ingredients!</p>';
+        return;
+      }
+
+      results.forEach(recipe => {
+        const div = document.createElement('div');
+        div.className = 'recipe';
+        div.innerHTML = `<strong>${recipe.name}</strong><br>Ingredients: ${recipe.ingredients.join(', ')}<br><div class="steps"><em>How to cook:</em> ${recipe.steps}</div><br><label>Add to: <select onchange='addToMealPlan("${recipe.name}", this)'><option value="">--Select Meal--</option>${["Breakfast", "Lunch", "Dinner"].map(meal => ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((day, d) => `<option value="${meal}_${d}">${day} - ${meal}</option>`).join('')).join('')}</select></label>`;
+        recipesDiv.appendChild(div);
+      });
+    }
+
+    function addToMealPlan(recipeName, select) {
+      const value = select.value;
+      if (!value) return;
+      const [meal, day] = value.split('_');
+      const row = { Breakfast: 0, Lunch: 1, Dinner: 2 }[meal];
+      mealPlan[row][day] = recipeName;
+      updateMealPlanner();
+    }
+
+    function updateMealPlanner() {
+      const plannerBody = document.getElementById('plannerBody');
+      plannerBody.innerHTML = '';
+      const meals = ['Breakfast', 'Lunch', 'Dinner'];
+      meals.forEach((meal, rowIndex) => {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.textContent = meal;
+        tr.appendChild(th);
+        for (let d = 0; d < 7; d++) {
+          const td = document.createElement('td');
+          td.textContent = mealPlan[rowIndex][d];
+          tr.appendChild(td);
+        }
+        plannerBody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
